@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单词连连看</title>
+    <!-- 引入SheetJS库以处理Excel文件 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- 引入样式文件 -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Start Screen -->
+        <div class="screen" id="start-screen">
+            <h1>单词连连看</h1>
+            
+            <!-- 数据源选择器 -->
+            <div class="data-source-selector">
+                <h3>单词数据来源</h3>
+                <div class="source-options">
+                    <label>
+                        <input type="radio" name="data-source" value="chapter" checked>
+                        按章节获取
+                    </label>
+                    <label>
+                        <input type="radio" name="data-source" value="upload">
+                        上传Excel文件
+                    </label>
+                    <label>
+                        <input type="radio" name="data-source" value="random">
+                        随机获取
+                    </label>
+                    <label>
+                        <input type="radio" name="data-source" value="custom">
+                        自定义输入
+                    </label>
+                </div>
+
+                <div id="upload-selector" style="display:none;">
+                    <input type="file" id="excel-upload" accept=".xlsx, .xls">
+                    <p>选择Excel文件，确保包含"单词"和"定义"列</p>
+                </div>
+                
+                <!-- 章节选择 (默认显示) -->
+                <div id="chapter-selector">
+                    <select id="chapter-select">
+                        <!-- 章节选项会在JavaScript中动态生成 -->
+                    </select>
+                </div>
+                
+                <!-- 随机获取选项 -->
+                <div id="random-selector" style="display:none;">
+                    <label>
+                        获取数量:
+                        <input type="number" id="random-count" min="5" max="50" value="20">
+                    </label>
+                </div>
+                
+                <!-- 自定义输入框 -->
+                <div id="custom-input" style="display:none;">
+                    <p>输入单词和定义，每行一组，用制表符或空格分隔</p>
+                    <textarea id="word-input" placeholder="示例:
+abandon    放弃
+achieve    达成
+believe    相信"></textarea>
+                    <button class="btn" id="sample-btn">使用示例</button>
+                </div>
+            </div>
+            
+            <div class="options">
+                <!-- 主题选择器 -->
+                <select id="theme-selector">
+                    <option value="default">默认主题</option>
+                    <option value="kaoyan-motivate">考研激励主题</option>
+                    <option value="kaoyan-calm">考研专注主题</option>
+                    <option value="kaoyan-night">考研夜间模式</option>
+                    <option value="forest">森林主题</option>
+                    <option value="ocean">海洋主题</option>
+                    <option value="space">太空主题</option>
+                    <option value="minimalist">极简主题</option>
+                    <option value="vintage">复古主题</option>
+                    <option value="custom">自定义背景</option>
+                </select>
+
+                <select id="difficulty">
+                    <option value="easy">简单</option>
+                    <option value="normal" selected>普通</option>
+                    <option value="hard">困难</option>
+                </select>
+                
+                <select id="board-size">
+                    <option value="8" selected>8x8 (32对)</option>
+                </select>
+            </div>
+            
+            <!-- 自定义背景上传 -->
+            <div id="custom-bg-upload" style="display:none; margin-top:15px;">
+                <input type="file" id="bg-upload" accept="image/*">
+                <p style="font-size:0.8rem; margin-top:5px;">选择背景图片</p>
+            </div>
+
+            <div class="tips">
+                <h3>游戏规则</h3>
+                <ul>
+                    <li>点击相同的单词和定义配对消除</li>
+                    <li>连线不能超过两个弯（即最多三条线段）</li>
+                    <li>连线路径上不能有其他未消除的卡片</li>
+                    <li>左键单击选择卡片，右键或再次点击可取消选择</li>
+                    <li>若无法继续连接，游戏会自动重新洗牌</li>
+                    <li>顶部空行可作为连接通道使用</li>
+                </ul>
+            </div>
+            
+            <button class="btn btn-secondary" id="start-btn">开始游戏</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div class="screen" id="game-screen" style="display:none">
+            <h2>单词连连看</h2>
+            
+            <div class="game-info">
+                <div class="info-box">
+                    <h3>时间</h3>
+                    <div class="value" id="time">60</div>
+                </div>
+                
+                <div class="info-box">
+                    <h3>分数</h3>
+                    <div class="value" id="score">0</div>
+                </div>
+                
+                <div class="info-box">
+                    <h3>连击</h3>
+                    <div class="value" id="combo">0</div>
+                </div>
+                
+                <div class="info-box">
+                    <h3>进度</h3>
+                    <div class="value"><span id="matched-pairs">0</span>/<span id="total-pairs">0</span></div>
+                </div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="fill" id="progress-fill"></div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-secondary" id="hint-btn">提示</button>
+                <button class="btn" id="shuffle-btn">重新洗牌</button>
+                <button class="btn" id="restart-btn">重新开始</button>
+                <button class="btn btn-danger" id="back-btn">返回</button>
+            </div>
+
+            <div id="game-board"></div>
+        </div>
+    </div>
+    
+    <!-- Result Modal -->
+    <div class="modal" id="result-modal">
+        <div class="modal-content">
+            <h2 id="result-title">游戏结束</h2>
+            
+            <div class="star-rating">
+                <span class="star" id="star1">★</span>
+                <span class="star" id="star2">★</span>
+                <span class="star" id="star3">★</span>
+            </div>
+            
+            <div class="stats">
+                <div class="stats-row">
+                    <div>最终得分</div>
+                    <div id="final-score">0</div>
+                </div>
+                <div class="stats-row">
+                    <div>剩余时间</div>
+                    <div id="time-left">0</div>
+                </div>
+                <div class="stats-row">
+                    <div>最高连击</div>
+                    <div id="max-combo">0</div>
+                </div>
+            </div>
+            
+            <div class="button-row">
+                <button class="btn btn-secondary" id="play-again-btn">再玩一次</button>
+                <button class="btn btn-success" id="next-level-btn" style="display:none;">下一关</button>
+                <button class="btn" id="menu-btn">返回菜单</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 规则帮助对话框 -->
+    <div class="modal help-modal" id="help-modal">
+        <div class="modal-content">
+            <h2>游戏规则</h2>
+            <div class="tips">
+                <ul>
+                    <li>点击相同的单词和定义配对消除</li>
+                    <li>连线不能超过两个弯（即最多三条线段）</li>
+                    <li>连线路径上不能有其他未消除的卡片</li>
+                    <li>左键单击选择卡片，右键或再次点击可取消选择</li>
+                    <li>若无法继续连接，游戏会自动重新洗牌</li>
+                    <li>顶部空行可作为连接通道使用</li>
+                </ul>
+            </div>
+            <div>
+                <h3>按键提示</h3>
+                <p>提示：显示一对可连接的卡片</p>
+                <p>洗牌：重新排列所有卡片</p>
+            </div>
+            
+            <div>
+                <h3>键盘快捷键</h3>
+                <ul>
+                    <li><strong>T 键</strong>：显示提示</li>
+                    <li><strong>空格键</strong>：重新洗牌</li>
+                    <li><strong>R 键</strong>：重新开始游戏</li>
+                    <li><strong>ESC 键</strong>：返回菜单</li>
+                </ul>
+            </div>
+            
+            <button class="btn" id="close-help-btn">关闭</button>
+        </div>
+    </div>
+    
+    <!-- 加载动画遮罩 -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">正在洗牌...</div>
+    </div>
+    
+    <!-- 错误提示 -->
+    <div class="error-toast" id="error-toast"></div>
+    
+    <!-- 关卡选择界面 -->
+    <div class="screen" id="level-screen" style="display:none">
+      <div class="level-centered-container">
+          <h1>关卡选择</h1>
+          
+          <div class="level-pagination">
+              <button class="btn btn-secondary pagination-btn" id="prev-page-btn" disabled>上一页</button>
+              <span class="page-indicator" id="page-indicator">第 1/1 页</span>
+              <button class="btn btn-secondary pagination-btn" id="next-page-btn" disabled>下一页</button>
+          </div>
+          
+          <div class="level-grid" id="level-grid">
+              <!-- 关卡会在JavaScript中动态生成 -->
+          </div>
+          
+          <button class="btn btn-danger" id="back-to-menu-btn">返回主菜单</button>
+      </div>
+    </div>
+
+    <!-- 引入JavaScript文件 -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/sound.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/pathfinding.js"></script>
+    <script src="js/gameLogic.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/levelSystem.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
