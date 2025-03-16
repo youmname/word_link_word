@@ -1,6 +1,5 @@
-// 修改这里的BASE_URL为您的服务器地址
-// const API_BASE_URL = 'http://175.24.181.59:3000/api';
-const API_BASE_URL = 'https://corsproxy.io/?http://175.24.181.59:3000/api';
+// 修改这里的BASE_URL为带CORS代理的API地址
+const API_BASE_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('http://175.24.181.59:3000/api');
 
 // 加载单词数据（从服务器获取）
 async function loadWordsData() {
@@ -53,14 +52,11 @@ async function loadWordsData() {
     } catch (error) {
         console.error("单词数据加载失败:", error);
         
-        // 如果从服务器加载失败，使用备用示例数据
-        setupFallbackData();
-        
         // 隐藏加载动画
         hideLoading();
         
         // 显示错误提示
-        showErrorToast('无法从服务器加载数据，使用备用数据');
+        showErrorToast('无法从服务器加载数据，请检查网络连接');
         
         return false;
     }
