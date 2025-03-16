@@ -57,7 +57,7 @@ async function loadWordsData() {
         hideLoading();
         
         return true;
-    } catch (error) {
+    } catch  (error) {
         console.error("单词数据加载失败:", error);
         
         // 定义一个默认的空数据集，以免程序崩溃
