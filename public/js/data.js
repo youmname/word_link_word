@@ -1,5 +1,5 @@
-// 修改这里的BASE_URL为带CORS代理的API地址
-const API_BASE_URL = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('http://175.24.181.59:3000/api');
+// 尝试另一个CORS代理
+const API_BASE_URL = 'https://proxy.cors.sh/' + 'http://175.24.181.59:3000/api';
 
 // 加载单词数据（从服务器获取）
 async function loadWordsData() {
@@ -8,7 +8,11 @@ async function loadWordsData() {
         showLoading('正在加载数据...');
         
         // 获取所有章节
-        const chaptersResponse = await fetch(`${API_BASE_URL}/chapters`);
+        const chaptersResponse = await fetch(`${API_BASE_URL}/chapters`, {
+            headers: {
+                'x-cors-api-key': 'temp_1e3c055c12ad97fc2ad9dcd8b8a0322f'
+            }
+        });
         
         if (!chaptersResponse.ok) {
             throw new Error(`获取章节失败: ${chaptersResponse.status}`);
@@ -24,7 +28,11 @@ async function loadWordsData() {
             const chapterNum = chapterObj.chapter;
             const chapterKey = `第${chapterNum}章`;
             
-            const wordsResponse = await fetch(`${API_BASE_URL}/chapters/${chapterNum}`);
+            const wordsResponse = await fetch(`${API_BASE_URL}/chapters/${chapterNum}`, {
+                headers: {
+                    'x-cors-api-key': 'temp_1e3c055c12ad97fc2ad9dcd8b8a0322f'
+                }
+            });
             
             if (!wordsResponse.ok) {
                 console.error(`获取第${chapterNum}章单词失败: ${wordsResponse.status}`);
@@ -52,6 +60,10 @@ async function loadWordsData() {
     } catch (error) {
         console.error("单词数据加载失败:", error);
         
+        // 定义一个默认的空数据集，以免程序崩溃
+        // 这不是"备用数据"，只是为了让程序不崩溃
+        excelData = {};
+        
         // 隐藏加载动画
         hideLoading();
         
@@ -65,7 +77,11 @@ async function loadWordsData() {
 // 获取可用章节
 async function getAvailableChapters() {
     try {
-        const response = await fetch(`${API_BASE_URL}/chapters`);
+        const response = await fetch(`${API_BASE_URL}/chapters`, {
+            headers: {
+                'x-cors-api-key': 'temp_1e3c055c12ad97fc2ad9dcd8b8a0322f'
+            }
+        });
         
         if (!response.ok) {
             throw new Error(`获取章节失败: ${response.status}`);
@@ -77,7 +93,7 @@ async function getAvailableChapters() {
         return chaptersData.map(item => `第${item.chapter}章`);
     } catch (error) {
         console.error("获取章节列表失败:", error);
-        return Object.keys(excelData);
+        return [];
     }
 }
 
@@ -91,7 +107,11 @@ async function fetchRandomWords(count, chapter = null) {
             url += `&chapter=${chapterNum}`;
         }
         
-        const response = await fetch(url);
+        const response = await fetch(url, {
+            headers: {
+                'x-cors-api-key': 'temp_1e3c055c12ad97fc2ad9dcd8b8a0322f'
+            }
+        });
         
         if (!response.ok) {
             throw new Error(`获取随机单词失败: ${response.status}`);
