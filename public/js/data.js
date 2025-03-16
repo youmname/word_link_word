@@ -1,5 +1,5 @@
-// 直接使用API URL，因为我们已经在服务器端配置了CORS
-const API_BASE_URL = 'http://175.24.181.59:3000/api';
+// 使用相对路径，指向我们的云函数
+const API_BASE_URL = '/api';
 
 // 加载单词数据（从服务器获取）
 async function loadWordsData() {
@@ -52,7 +52,7 @@ async function loadWordsData() {
     } catch (error) {
         console.error("单词数据加载失败:", error);
         
-        // 定义一个默认的空数据集，以免程序崩溃
+        // 定义一个空数据集，以免程序崩溃
         excelData = {};
         
         // 隐藏加载动画
