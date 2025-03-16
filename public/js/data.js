@@ -1,6 +1,6 @@
 // 修改这里的BASE_URL为您的服务器地址
 // const API_BASE_URL = 'http://175.24.181.59:3000/api';
-const API_BASE_URL = '/api';
+const API_BASE_URL = 'https://corsproxy.io/?http://175.24.181.59:3000/api';
 
 // 加载单词数据（从服务器获取）
 async function loadWordsData() {
